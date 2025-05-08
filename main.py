@@ -27,7 +27,6 @@ async def command_start(message: Message, state: FSMContext):
         "Вы можете прервать опрос, послав команду /stop.\n"
         "В каком городе вы живёте?",
     )
-    return city
 
 
 @dp.message(Command("stop"))
@@ -59,7 +58,6 @@ async def process_weather(message: Message, state: FSMContext):
     logger.info(f"погода {weather}")
     await message.answer(
         "Спасибо за участие в опросе! Всего доброго!")
-    return weather
 
 
 async def main():

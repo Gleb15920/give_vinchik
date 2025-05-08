@@ -1,5 +1,8 @@
+from aiogram.fsm.state import StatesGroup, State
+
+
 class User:
-    def __init__(self, user_id, city, interests):
-        self.user_id = user_id
-        self.city = city
-        self.interests = interests
+    user_id = State()
+    name = State()
+    interest = State()
+    likes = State()

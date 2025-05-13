@@ -78,3 +78,18 @@ async def two_answ(message: types.Message):
 async def three_answ(message: types.Message):
     await message.answer("Напишите искомые интересы")
 
+
+async def main():
+    load_dotenv()
+    token_tg = os.getenv("TELEGRAM_TOKEN")
+    bot = Bot(token=token_tg)
+    dp = Dispatcher()
+    dp.include_router(router)
+    await dp.start_polling(bot)
+
+if __name__ == '__main__':
+    try:
+        asyncio.run(main())
+    except KeyboardInterrupt:
+        print('Бот выключен')
+

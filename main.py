@@ -5,7 +5,15 @@ from aiogram.types import Message
 from aiogram.filters import CommandStart
 from aiogram import Router, types, F
 # import give_vinchik.app.keybords as kb
+import asyncio
+import os
+from aiogram import Bot, Dispatcher
+from dotenv import load_dotenv
 
+
+load_dotenv()
+token_tg = os.getenv("TELEGRAM_TOKEN")
+bot = Bot(token=token_tg)
 
 def make_db():
     conn = sqlite3.connect('users_table.db')
@@ -80,9 +88,6 @@ async def three_answ(message: types.Message):
 
 
 async def main():
-    load_dotenv()
-    token_tg = os.getenv("TELEGRAM_TOKEN")
-    bot = Bot(token=token_tg)
     dp = Dispatcher()
     dp.include_router(router)
     await dp.start_polling(bot)

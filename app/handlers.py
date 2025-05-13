@@ -29,15 +29,7 @@ async def one_answ(message: types.Message):
         photo_data = message.photo[-1] #сохранение присланной фотки
         await message.reply('Фотография добавлена в анкету!')
 
-    @router.message((F.content_type == ContentType.TEXT) |
-                    (F.content_type == ContentType.VIDEO) |
-                    (F.content_type == ContentType.AUDIO) |
-                    (F.content_type == ContentType.DOCUMENT) |
-                    (F.content_type == ContentType.STICKER) |
-                    (F.content_type == ContentType.LOCATION) |
-                    (F.content_type == ContentType.VENUE) |
-                    (F.content_type == ContentType.CONTACT) |
-                    (F.content_type == ContentType.ANIMATION))
+    @router.message(F.content_type != ContentType.PHOTO)
     async def handle_non_photo(message: types.Message):
         await message.reply("Это не фото")
 

@@ -12,9 +12,9 @@ async def cmd_hello(message: Message):
         f"Привет, <b>{message.from_user.full_name}</b>! Чтобы найти новые знакомства, заполни анкету.",
         parse_mode=ParseMode.HTML)
 
-    await message.answer(f"Нажмите:"
-                         f"1 - Добавить фотографию"
-                         f"2 - Добавить описание"
+    await message.answer(f"Нажмите:\n"
+                         f"1 - Добавить фотографию\n"
+                         f"2 - Добавить описание\n"
                          f"3 - Добавить искомые интересы",
                         reply_markup=kb.otdaivincikBot,
                         resize_keyboard=True,
@@ -40,7 +40,6 @@ async def one_answ(message: types.Message):
                     (F.content_type == ContentType.ANIMATION))
     async def handle_non_photo(message: types.Message):
         await message.reply("Это не фото")
-
 
 @router.message(F.text.lower() == "2")
 async def two_answ(message: types.Message):

@@ -9,7 +9,8 @@ def make_db():
             CREATE TABLE IF NOT EXISTS users (
                 tg_id INTEGER PRIMARY KEY,
                 name TEXT NOT NULL,
-                interests TEXT NOT NULL
+                interests TEXT NOT NULL,
+                photo TEXT NOT NULL
             )
         ''')
     conn.commit()
@@ -17,7 +18,7 @@ def make_db():
 
 
 make_db()
-user1 = user.User(*input().split(sep=", "), input().split(sep=", "))
+user1 = user.User(*input().split(sep=", "), input().split(sep=", "), input().strip())
 user2 = user.User(*input().split(sep=", "), input().split(sep=", "))
 user3 = user.User(*input().split(sep=", "), input().split(sep=", "))
 print(user1.interests)

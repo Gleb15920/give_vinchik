@@ -4,6 +4,7 @@ from aiogram import Bot, Dispatcher
 from app.handlers import router
 from dotenv import load_dotenv
 
+
 async def main():
     load_dotenv()
     token_tg = os.getenv("TELEGRAM_TOKEN")

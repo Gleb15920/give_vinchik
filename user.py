@@ -32,10 +32,10 @@ class User:
     def change_name(self, name):
         try:
             self.name = name
-
             conn = sqlite3.connect(self.db_table)
             cursor = conn.cursor()
             cursor.execute('UPDATE users SET name = ? WHERE tg_id = ?', (self.name, self.tg_id))
+            conn.commit()
             conn.close()
         except sqlite3.Error as e:
             return False, f"Ошибка базы данных: {e}"
@@ -48,6 +48,7 @@ class User:
             conn = sqlite3.connect(self.db_table)
             cursor = conn.cursor()
             cursor.execute('UPDATE users SET interests = ? WHERE tg_id = ?', (interests_json, self.tg_id))
+            conn.commit()
             conn.close()
         except sqlite3.Error as e:
             return False, f"Ошибка базы данных: {e}"
@@ -59,6 +60,7 @@ class User:
             conn = sqlite3.connect(self.db_table)
             cursor = conn.cursor()
             cursor.execute('UPDATE users SET photo = ? WHERE tg_id = ?', (self.photo, self.tg_id))
+            conn.commit()
             conn.close()
         except sqlite3.Error as e:
             return False, f"Ошибка базы данных: {e}"
@@ -70,6 +72,7 @@ class User:
             conn = sqlite3.connect(self.db_table)
             cursor = conn.cursor()
             cursor.execute('UPDATE users SET description = ? WHERE tg_id = ?', (self.description, self.tg_id))
+            conn.commit()
             conn.close()
         except sqlite3.Error as e:
             return False, f"Ошибка базы данных: {e}"
@@ -144,7 +147,7 @@ class User:
         except sqlite3.Error as e:
             return False, f"Ошибка базы данных: {e}"
 
-    def like(self, user: User):
+    def like(self, user):
         if self.tg_id in user.likes:
             user.del_like(self)
             return True
@@ -167,7 +170,7 @@ def get_user(tg_id):
             interests = json.loads(ans[2])
             return User(ans[0], ans[1], interests, ans[3], ans[4])
         else:
-            return None
+            return False
     except sqlite3.Error as e:
         return False, f"Ошибка базы данных: {e}"
 

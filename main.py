@@ -10,8 +10,9 @@ def make_db():
                 tg_id INTEGER PRIMARY KEY,
                 name TEXT NOT NULL,
                 interests TEXT NOT NULL,
-                description TEXT NOT NULL,
-                photo TEXT NOT NULL
+                description TEXT,
+                photo TEXT NOT NULL,
+                likes TEXT
             )
         ''')
     conn.commit()

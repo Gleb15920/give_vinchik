@@ -3,6 +3,7 @@ import sqlite3
 
 db_table = 'users_table.db'
 
+
 class User:
     def __init__(self, tg_id, name, interests, description, photo):
         self.tg_id = tg_id
@@ -11,6 +12,7 @@ class User:
         self.photo = photo
         self.description = description
         self.db_table = db_table
+        self.likes = []
         self.update()
 
     def db(self):
@@ -86,9 +88,10 @@ class User:
 
             similarities = []
             for other_id, name, interests_json in users:
-                other_interests = json.loads(interests_json)
-                similarity = jaccard_similarity(self.interests, other_interests)
-                similarities.append((get_user(other_id), str(int(similarity * 100)) + "%"))
+                if other_id not in self.likes:
+                    other_interests = json.loads(interests_json)
+                    similarity = jaccard_similarity(self.interests, other_interests)
+                    similarities.append((get_user(other_id), str(int(similarity * 100)) + "%"))
 
             similarities.sort(key=lambda x: x[1], reverse=True)
             return similarities
@@ -117,6 +120,41 @@ class User:
     #         return True
     #     except sqlite3.Error as e:
     #         return False, f"Ошибка базы данных: {e}"
+
+    def add_like(self, user):
+        try:
+            self.likes.append(user.tg_id)
+            likes_json = json.dumps(self.likes)
+
+            conn = sqlite3.connect(self.db_table)
+            cursor = conn.cursor()
+            cursor.execute('UPDATE users SET likes = ? WHERE tg_id = ?', (likes_json, self.tg_id))
+            conn.close()
+        except sqlite3.Error as e:
+            return False, f"Ошибка базы данных: {e}"
+
+    def del_like(self, user):
+        try:
+            self.likes.remove(user.tg_id)
+            likes_json = json.dumps(self.likes)
+
+            conn = sqlite3.connect(self.db_table)
+            cursor = conn.cursor()
+            cursor.execute('UPDATE users SET likes = ? WHERE tg_id = ?', (likes_json, self.tg_id))
+            conn.close()
+        except sqlite3.Error as e:
+            return False, f"Ошибка базы данных: {e}"
+
+    def like(self, user):
+        if self.tg_id in user.likes:
+            user.del_like(self)
+            return True
+        else:
+            self.add_like(user)
+            return False
+
+    def get_likes(self):
+        return [get_user(i) for i in self.likes]
 
 
 def get_user(tg_id):

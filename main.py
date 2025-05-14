@@ -10,6 +10,7 @@ def make_db():
                 tg_id INTEGER PRIMARY KEY,
                 name TEXT NOT NULL,
                 interests TEXT NOT NULL,
+                description TEXT NOT NULL,
                 photo TEXT NOT NULL
             )
         ''')
@@ -18,8 +19,28 @@ def make_db():
 
 
 make_db()
-user1 = user.User(*input().split(sep=", "), input().split(sep=", "), input().strip())
-user2 = user.User(*input().split(sep=", "), input().split(sep=", "))
-user3 = user.User(*input().split(sep=", "), input().split(sep=", "))
-print(user1.interests)
-print(user2.find_similar_users())
+# tg_id = input()
+# name = input("Напишите имя ")
+# interests = input("Напишите интересы ")
+# photo = input("Отправьте фото ")
+# description = input("Отправьте описание ")
+# user1 = user.User(tg_id, name, interests, description, photo)
+# print(user1.interests)
+# user1.change_interests("fgfg, gfgfg, sdksakl, qwodeiqwdfj, 123")
+# print(user1.interests)
+# tg_id = input()
+# name = input("Напишите имя ")
+# interests = input("Напишите интересы ").split()
+# photo = input("Отправьте фото ")
+# description = input("Отправьте  ")
+# user2 = user.User(tg_id, name, interests, description, photo)
+# tg_id = input()
+# name = input("Напишите имя ")
+# interests = input("Напишите интересы ").split()
+# photo = input("Отправьте фото ")
+# description = input("Отправьте описание ")
+# user3 = user.User(tg_id, name, interests, description, photo)
+user2 = user.get_user("3124234")
+print(user2.description)
+print(user2.delete_user())
+print(user.get_user("23423"))

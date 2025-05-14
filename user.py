@@ -1,68 +1,137 @@
 import json
 import sqlite3
 
-
 db_table = 'users_table.db'
 
+
 class User:
-    def __init__(self, tg_id, name, interests, photo):
+    def __init__(self, tg_id, name, interests, description, photo):
         self.tg_id = tg_id
         self.name = name
         self.interests = interests
         self.photo = photo
+        self.description = description
         self.db_table = db_table
         self.update()
 
     def db(self):
-        conn = sqlite3.connect(self.db_table)
-        cursor = conn.cursor()
+        try:
+            conn = sqlite3.connect(self.db_table)
+            cursor = conn.cursor()
 
-        interests_json = json.dumps(self.interests)
-        cursor.execute('INSERT OR REPLACE INTO users (tg_id, name, interests, photo) VALUES (?, ?, ?, ?)',
-                       (self.tg_id, self.name, interests_json, self.photo))
+            interests_json = json.dumps(self.interests)
+            cursor.execute('INSERT OR REPLACE INTO users (tg_id, name, interests, description, photo)'
+                           ' VALUES (?, ?, ?, ?, ?)',
+                           (self.tg_id, self.name, interests_json, self.description, self.photo))
 
-        conn.commit()
-        conn.close()
+            conn.commit()
+            conn.close()
+        except sqlite3.Error as e:
+            return False, f"Ошибка базы данных: {e}"
 
     def change_name(self, name):
-        pass
+        try:
+            self.name = name
 
-    def change_interests(self):
-        pass
+            conn = sqlite3.connect(self.db_table)
+            cursor = conn.cursor()
+            cursor.execute('UPDATE users SET name = ? WHERE tg_id = ?', (self.name, self.tg_id))
+            conn.close()
+        except sqlite3.Error as e:
+            return False, f"Ошибка базы данных: {e}"
 
-    def change_photo(self):
-        pass
+    def change_interests(self, interests):
+        try:
+            self.interests = interests.split(", ")
+            interests_json = json.dumps(self.interests)
+
+            conn = sqlite3.connect(self.db_table)
+            cursor = conn.cursor()
+            cursor.execute('UPDATE users SET interests = ? WHERE tg_id = ?', (interests_json, self.tg_id))
+            conn.close()
+        except sqlite3.Error as e:
+            return False, f"Ошибка базы данных: {e}"
+
+    def change_photo(self, photo):
+        try:
+            self.photo = photo
+
+            conn = sqlite3.connect(self.db_table)
+            cursor = conn.cursor()
+            cursor.execute('UPDATE users SET photo = ? WHERE tg_id = ?', (self.photo, self.tg_id))
+            conn.close()
+        except sqlite3.Error as e:
+            return False, f"Ошибка базы данных: {e}"
+
+    def change_description(self, description):
+        try:
+            self.description = description
+
+            conn = sqlite3.connect(self.db_table)
+            cursor = conn.cursor()
+            cursor.execute('UPDATE users SET description = ? WHERE tg_id = ?', (self.description, self.tg_id))
+            conn.close()
+        except sqlite3.Error as e:
+            return False, f"Ошибка базы данных: {e}"
 
     def update(self):
         self.db()
 
     def find_similar_users(self):
-        conn = sqlite3.connect(self.db_table)
-        cursor = conn.cursor()
-        cursor.execute('SELECT tg_id, name, interests FROM users WHERE tg_id != ?', (self.tg_id,))
-        users = cursor.fetchall()
-        conn.close()
+        try:
+            conn = sqlite3.connect(self.db_table)
+            cursor = conn.cursor()
+            cursor.execute('SELECT tg_id, name, interests FROM users WHERE tg_id != ?', (self.tg_id,))
+            users = cursor.fetchall()
+            conn.close()
 
-        similarities = []
-        for other_id, name, interests_json in users:
-            other_interests = json.loads(interests_json)
-            similarity = jaccard_similarity(self.interests, other_interests)
-            similarities.append((name, str(int(similarity * 100)) + "%"))
+            similarities = []
+            for other_id, name, interests_json in users:
+                other_interests = json.loads(interests_json)
+                similarity = jaccard_similarity(self.interests, other_interests)
+                similarities.append((name, str(int(similarity * 100)) + "%"))
 
-        similarities.sort(key=lambda x: x[1], reverse=True)
-        return similarities
+            similarities.sort(key=lambda x: x[1], reverse=True)
+            return similarities
+        except sqlite3.Error as e:
+            return False, f"Ошибка базы данных: {e}"
+
+    def delete_user(self):
+        try:
+            conn = sqlite3.connect(self.db_table)
+            cursor = conn.cursor()
+            cursor.execute('DELETE FROM users WHERE tg_id = ?', (self.tg_id,))
+            conn.commit()
+            conn.close()
+            del self
+        except sqlite3.Error as e:
+            return False, f"Ошибка базы данных: {e}"
+
+    # def check_db(self):
+    #     try:
+    #         conn = sqlite3.connect(self.db_table)
+    #         cursor = conn.cursor()
+    #         cursor.execute('SELECT id FROM users WHERE id = ?', (self.tg_id,))
+    #         if not cursor.fetchone():
+    #             conn.close()
+    #             return False, "Пользователь не найден."
+    #         return True
+    #     except sqlite3.Error as e:
+    #         return False, f"Ошибка базы данных: {e}"
 
 
 def get_user(tg_id):
     conn = sqlite3.connect(db_table)
     cursor = conn.cursor()
-    cursor.execute('SELECT tg_id, name, interests, photo FROM users WHERE tg_id = ?', (tg_id,))
+    cursor.execute('SELECT tg_id, name, interests, description, photo FROM users WHERE tg_id = ?', (tg_id,))
     ans = cursor.fetchone()
     conn.close()
     if ans:
-        return User(ans[0], ans[1], ans[2], ans[3])
+        interests = json.loads(ans[2])
+        return User(ans[0], ans[1], interests, ans[3], ans[4])
     else:
         return None
+
 
 def jaccard_similarity(list1, list2):
     set1, set2 = set(list1), set(list2)

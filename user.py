@@ -1,7 +1,6 @@
 import json
 import sqlite3
-
-db_table = 'users_table.db'
+from config import db_table
 
 
 class User:
@@ -145,7 +144,7 @@ class User:
         except sqlite3.Error as e:
             return False, f"Ошибка базы данных: {e}"
 
-    def like(self, user):
+    def like(self, user: User):
         if self.tg_id in user.likes:
             user.del_like(self)
             return True

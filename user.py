@@ -3,7 +3,6 @@ import sqlite3
 
 db_table = 'users_table.db'
 
-
 class User:
     def __init__(self, tg_id, name, interests, description, photo):
         self.tg_id = tg_id
@@ -89,7 +88,7 @@ class User:
             for other_id, name, interests_json in users:
                 other_interests = json.loads(interests_json)
                 similarity = jaccard_similarity(self.interests, other_interests)
-                similarities.append((name, str(int(similarity * 100)) + "%"))
+                similarities.append((get_user(other_id), str(int(similarity * 100)) + "%"))
 
             similarities.sort(key=lambda x: x[1], reverse=True)
             return similarities
@@ -121,16 +120,19 @@ class User:
 
 
 def get_user(tg_id):
-    conn = sqlite3.connect(db_table)
-    cursor = conn.cursor()
-    cursor.execute('SELECT tg_id, name, interests, description, photo FROM users WHERE tg_id = ?', (tg_id,))
-    ans = cursor.fetchone()
-    conn.close()
-    if ans:
-        interests = json.loads(ans[2])
-        return User(ans[0], ans[1], interests, ans[3], ans[4])
-    else:
-        return None
+    try:
+        conn = sqlite3.connect(db_table)
+        cursor = conn.cursor()
+        cursor.execute('SELECT tg_id, name, interests, description, photo FROM users WHERE tg_id = ?', (tg_id,))
+        ans = cursor.fetchone()
+        conn.close()
+        if ans:
+            interests = json.loads(ans[2])
+            return User(ans[0], ans[1], interests, ans[3], ans[4])
+        else:
+            return None
+    except sqlite3.Error as e:
+        return False, f"Ошибка базы данных: {e}"
 
 
 def jaccard_similarity(list1, list2):

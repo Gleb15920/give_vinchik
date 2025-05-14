@@ -1,11 +1,14 @@
 import asyncio
 import os
+import sqlite3
+
 from aiogram import Bot, Dispatcher
 from app.handlers import router
 from dotenv import load_dotenv
 
 
 async def main():
+    make_db()
     load_dotenv()
     token_tg = os.getenv("TELEGRAM_TOKEN")
     bot = Bot(token=token_tg)
@@ -18,3 +21,19 @@ if __name__ == '__main__':
         asyncio.run(main())
     except KeyboardInterrupt:
         print('Бот выключен')
+
+def make_db():
+    conn = sqlite3.connect('users_table.db')
+    cursor = conn.cursor()
+    cursor.execute('''
+            CREATE TABLE IF NOT EXISTS users (
+                tg_id INTEGER PRIMARY KEY,
+                name TEXT NOT NULL,
+                interests TEXT NOT NULL,
+                description TEXT,
+                photo TEXT NOT NULL,
+                likes TEXT
+            )
+        ''')
+    conn.commit()
+    conn.close()

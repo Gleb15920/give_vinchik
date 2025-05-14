@@ -5,6 +5,13 @@ from aiogram.types import Message, ReplyKeyboardRemove
 from aiogram.filters import CommandStart, StateFilter, Command
 from aiogram import Router, types, F
 import give_vinchik.app.keybords as kb
+import os
+import logging
+from datetime import datetime
+
+# Настройка логирования
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
 
 router = Router()
 
@@ -69,6 +76,45 @@ async def user_photo(message: Message, state: FSMContext):
     if message.content_type != ContentType.PHOTO:
         await message.reply('Отправьте фото!')
         return
+    try:
+        # Получаем фотографию с наивысшим разрешением
+        photo = message.photo[-1]
+        logger.info(f"Получена фотография с file_id: {photo.file_id}")
+
+        # Получаем информацию о файле
+        file_info = await bot.get_file(photo.file_id)
+        logger.info(f"Информация о файле: {file_info.file_path}")
+
+        # Скачиваем файл
+        downloaded_file = await bot.download_file(file_info.file_path)
+        logger.info("Файл успешно скачан")
+
+        # Формируем уникальное имя файла с временной меткой
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        save_path = f"photo_{timestamp}_{photo.file_id}.jpg"
+
+        # Проверяем права на запись в директорию
+        save_dir = os.path.dirname(save_path) or "."
+        if not os.access(save_dir, os.W_OK):
+            logger.error(f"Нет прав на запись в директорию: {save_dir}")
+            await message.reply("Ошибка: Нет прав на запись в директорию.")
+            return
+
+        # Сохраняем файл
+        with open(save_path, 'wb') as new_file:
+            new_file.write(downloaded_file.read())
+
+        # Проверяем, существует ли файл
+        if os.path.exists(save_path):
+            logger.info(f"Фотография сохранена как {save_path}")
+            await message.reply(f"Фотография сохранена как {save_path}.")
+        else:
+            logger.error("Файл не был сохранен")
+            await message.reply("Ошибка: Файл не был сохранен.")
+
+    except Exception as e:
+        logger.error(f"Ошибка при обработке фотографии: {str(e)}")
+        await message.reply(f"Ошибка при сохранении фотографии: {str(e)}")
     await state.update_data(photo=message.photo)
     await message.answer('Осталось лишь указать свои интересы! Напиши их через запятую.')
     await state.set_state(Questionnaire.interests_user)

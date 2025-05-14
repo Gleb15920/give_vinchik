@@ -153,8 +153,8 @@ class User:
             self.add_like(user)
             return False
 
-    def get_likes(self):
-        return [get_user(i) for i in self.likes]
+    # def get_likes(self):
+    #     return [get_user(i) for i in self.likes]
 
 
 def get_user(tg_id):

@@ -5,6 +5,13 @@ import sqlite3
 from aiogram import Bot, Dispatcher
 from app.handlers import router
 from dotenv import load_dotenv
+from aiogram.enums import ParseMode, ContentType
+from aiogram.fsm.context import FSMContext
+from aiogram.fsm.state import StatesGroup, State
+from aiogram.types import Message, ReplyKeyboardRemove
+from aiogram.filters import CommandStart, StateFilter, Command
+from aiogram import Router, types, F
+import give_vinchik.app.keybords as kb
 
 
 async def main():

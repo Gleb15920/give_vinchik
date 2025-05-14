@@ -1,105 +1,88 @@
-import asyncio
-import os
-
 from aiogram.enums import ParseMode, ContentType
-from aiogram.types import Message
-from aiogram.filters import CommandStart
-from aiogram import Router, types, F, Bot, Dispatcher
+from aiogram.fsm.context import FSMContext
+from aiogram.fsm.state import StatesGroup, State
+from aiogram.types import Message, ReplyKeyboardRemove
+from aiogram.filters import CommandStart, StateFilter, Command
+from aiogram import Router, types, F
 import give_vinchik.app.keybords as kb
-from dotenv import load_dotenv
-import logging
-import logging
-from datetime import datetime
-
-# Настройка логирования
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
-logger = logging.getLogger(__name__)
 
 router = Router()
-load_dotenv()
-token_tg = os.getenv("TELEGRAM_TOKEN")
-bot = Bot(token=token_tg)
-dp = Dispatcher()
+
+class Questionnaire(StatesGroup):
+    username = State()
+    description_user = State()
+    photo_user = State()
+    interests_user = State()
+
+@router.message(F.text == 'Остановить создание анкеты')
+async def cancel_handler(message: types.Message, state: FSMContext):
+    await state.clear()
+    await message.reply('Создание анкеты прервано. Отпраьте /reg чтобы начать сначала.')
+
 
 @router.message(CommandStart())
 async def cmd_hello(message: Message):
     await message.reply(
-        f"Привет, <b>{message.from_user.full_name}</b>! Чтобы найти новые знакомства, заполни анкету.",
+        f"Привет, <b>{message.from_user.full_name}</b>! Приступим к созданию твоей анкеты.\n Напиши в чат /reg, чтобы начать",
         parse_mode=ParseMode.HTML)
 
-    await message.answer(f"Нажмите:\n"
-                         f"1 - Добавить фотографию\n"
-                         f"2 - Добавить описание\n"
-                         f"3 - Добавить искомые интересы",
-                        reply_markup=kb.otdaivincikBot,
-                        resize_keyboard=True,
-                        input_field_placeholder='Выберите цифру')
-
-@router.message(F.text.lower() == "1")
-async def one_answ(message: types.Message):
-    await message.answer("Пришлите 1 фотографию")
-
-    @router.message(F.photo)
-    async def cmd_photo(message: Message):
-        try:
-            # Получаем фотографию с наивысшим разрешением
-            photo = message.photo[-1]
-            logger.info(f"Получена фотография с file_id: {photo.file_id}")
-
-            # Получаем информацию о файле
-            file_info = await bot.get_file(photo.file_id)
-            logger.info(f"Информация о файле: {file_info.file_path}")
-
-            # Скачиваем файл
-            downloaded_file = await bot.download_file(file_info.file_path)
-            logger.info("Файл успешно скачан")
-
-            # Формируем уникальное имя файла с временной меткой
-            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            save_path = f"photo_{timestamp}_{photo.file_id}.jpg"
-
-            # Проверяем права на запись в директорию
-            save_dir = os.path.dirname(save_path) or "."
-            if not os.access(save_dir, os.W_OK):
-                logger.error(f"Нет прав на запись в директорию: {save_dir}")
-                await message.reply("Ошибка: Нет прав на запись в директорию.")
-                return
-
-            # Сохраняем файл
-            with open(save_path, 'wb') as new_file:
-                new_file.write(downloaded_file.read())
-
-            # Проверяем, существует ли файл
-            if os.path.exists(save_path):
-                logger.info(f"Фотография сохранена как {save_path}")
-                await message.reply(f"Фотография сохранена как {save_path}.")
-            else:
-                logger.error("Файл не был сохранен")
-                await message.reply("Ошибка: Файл не был сохранен.")
-
-        except Exception as e:
-            logger.error(f"Ошибка при обработке фотографии: {str(e)}")
-            await message.reply(f"Ошибка при сохранении фотографии: {str(e)}")
-
-    @router.message(F.content_type != ContentType.PHOTO)
-    async def handle_non_photo(message: types.Message):
-        await message.reply("Это не фото")
-
-@router.message(F.text.lower() == "2")
-async def two_answ(message: types.Message):
-    await message.answer("Пришлите описание анкеты")
-
-@router.message(F.text.lower() == "3")
-async def three_answ(message: types.Message):
-    await message.answer("Напишите искомые интересы")
+@router.message(Command('reg'))
+async def user_name(message: Message, state: FSMContext):
+    await state.set_state(Questionnaire.username)
+    await message.answer(
+        text="Введи своё имя",
+        reply_markup=kb.otdaivincikBot,
+        resize_keyboard=True)
 
 
-async def main():
-    dp.include_router(router)
-    await dp.start_polling(bot)
+@router.message(Questionnaire.username)
+async def second_user_name(message: Message, state: FSMContext):
+    if message.content_type != ContentType.TEXT:
+        await message.reply("Пожалуйста, введите ваше имя в виде текста.")
+        return
+    await state.update_data(username=message.text)
+    await message.reply(
+        text="Спасибо! Ваше имя было сохранено.",
+        reply_markup=kb.otdaivincikBot,
+        resize_keyboard=True
+    )
+    await state.set_state(Questionnaire.description_user)
+    await message.answer(
+        text="Теперь придумай описание к своей анкете.",
+        reply_markup=kb.otdaivincikBot,
+        resize_keyboard=True
+    )
 
-if __name__ == '__main__':
-    try:
-        asyncio.run(main())
-    except KeyboardInterrupt:
-        print('Бот выключен')
+
+@router.message(Questionnaire.description_user)
+async def user_description(message: Message, state: FSMContext):
+    await state.update_data(description_user=message.text)
+    await message.answer(
+        text="Отлично! Отправьте ваше лучшее фото.",
+        reply_markup=kb.otdaivincikBot,
+        resize_keyboard=True
+    )
+    await state.set_state(Questionnaire.photo_user)
+
+@router.message(Questionnaire.photo_user)
+async def user_photo(message: Message, state: FSMContext):
+    if message.content_type != ContentType.PHOTO:
+        await message.reply('Отправьте фото!')
+        return
+    await state.update_data(photo=message.photo)
+    await message.answer('Осталось лишь указать свои интересы! Напиши их через запятую.')
+    await state.set_state(Questionnaire.interests_user)
+
+
+@router.message(Questionnaire.interests_user)
+async def user_interests(message: Message, state: FSMContext):
+    if message.content_type != ContentType.TEXT:
+        await message.reply("Пожалуйста, введите ваши интересы в виде текста.")
+        return
+    await state.update_data(username=message.text)
+    await message.reply(
+        text="Ваша анкета создана. Так она выглядит:",
+        reply_markup=kb.otdaivincikBot,
+        resize_keyboard=True
+    )
+    #тут будет бот присылать сообщение полной анкеты

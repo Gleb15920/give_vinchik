@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 
 
 load_dotenv()
-token_tg = "7710892682:AAF2wlOhNEkTuJKFUalqFQujfeZ2vxdlcVo"
+token_tg = os.getenv("TELEGRAM_TOKEN")
 bot = Bot(token=token_tg)
 router = Router()
 dp = Dispatcher()

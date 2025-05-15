@@ -12,6 +12,7 @@ from aiogram.types import Message, ReplyKeyboardRemove
 from aiogram.filters import CommandStart, StateFilter, Command
 from aiogram import Router
 import give_vinchik.app.keybords as kb
+import give_vinchik.user as user
 
 import logging
 
@@ -35,7 +36,8 @@ def make_db():
                 interests TEXT NOT NULL,
                 description TEXT,
                 photo TEXT NOT NULL,
-                likes TEXT
+                likes TEXT,
+                i INTEGER
             )
         ''')
     conn.commit()

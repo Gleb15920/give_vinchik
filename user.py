@@ -4,7 +4,7 @@ from config import db_table
 
 
 class User:
-    def __init__(self, tg_id, name, interests, description, photo):
+    def __init__(self, tg_id, name, interests, description, photo, likes, i):
         self.tg_id = tg_id
         self.name = name
         if type(interests) is str:
@@ -17,7 +17,7 @@ class User:
         self.db_table = db_table
         self.likes = []
         self.similars = []
-        self.i = -1
+        self.i = i
         self.update()
 
     def db(self):
@@ -26,9 +26,10 @@ class User:
             cursor = conn.cursor()
 
             interests_json = json.dumps(self.interests)
-            cursor.execute('INSERT OR REPLACE INTO users (tg_id, name, interests, description, photo)'
-                           ' VALUES (?, ?, ?, ?, ?)',
-                           (self.tg_id, self.name, interests_json, self.description, self.photo))
+            likes = json.dumps(self.likes) if self.likes else None
+            cursor.execute('INSERT OR REPLACE INTO users (tg_id, name, interests, description, photo, likes, i)'
+                           ' VALUES (?, ?, ?, ?, ?, ?, ?)',
+                           (self.tg_id, self.name, interests_json, self.description, self.photo, likes, self.i))
 
             conn.commit()
             conn.close()
@@ -41,6 +42,28 @@ class User:
             conn = sqlite3.connect(self.db_table)
             cursor = conn.cursor()
             cursor.execute('UPDATE users SET name = ? WHERE tg_id = ?', (self.name, self.tg_id))
+            conn.commit()
+            conn.close()
+        except sqlite3.Error as e:
+            return False, f"Ошибка базы данных: {e}"
+
+    def add_i(self):
+        try:
+            self.i += 1
+            conn = sqlite3.connect(self.db_table)
+            cursor = conn.cursor()
+            cursor.execute('UPDATE users SET i = ? WHERE tg_id = ?', (self.i, self.tg_id))
+            conn.commit()
+            conn.close()
+        except sqlite3.Error as e:
+            return False, f"Ошибка базы данных: {e}"
+
+    def nul_i(self):
+        try:
+            self.i = -1
+            conn = sqlite3.connect(self.db_table)
+            cursor = conn.cursor()
+            cursor.execute('UPDATE users SET i = ? WHERE tg_id = ?', (self.i, self.tg_id))
             conn.commit()
             conn.close()
         except sqlite3.Error as e:
@@ -88,7 +111,7 @@ class User:
             return False, f"Ошибка базы данных: {e}"
 
     def update(self):
-        self.db()
+        print(self.db())
 
     def find_similar_users(self):
         try:
@@ -103,7 +126,7 @@ class User:
                 if other_id not in self.likes:
                     other_interests = json.loads(interests_json)
                     similarity = jaccard_similarity(self.interests, other_interests)
-                    similarities.append((get_user(other_id), str(int(similarity * 100)) + "%"))
+                    similarities.append((other_id, str(int(similarity * 100)) + "%"))
 
             similarities.sort(key=lambda x: x[1], reverse=True)
             self.similars = similarities
@@ -111,12 +134,17 @@ class User:
             return False, f"Ошибка базы данных: {e}"
 
     def pop_user(self):
-        print(self.i, len(self.similars))
         if self.i + 1 < len(self.similars):
-            self.i += 1
+            self.add_i()
             return self.similars[self.i]
         else:
-            return None
+            return None, None
+
+    def similar(self):
+        if self.i < len(self.similars):
+            return self.similars[self.i]
+        else:
+            return None, None
 
     def delete_user(self):
         try:
@@ -149,6 +177,7 @@ class User:
             conn = sqlite3.connect(self.db_table)
             cursor = conn.cursor()
             cursor.execute('UPDATE users SET likes = ? WHERE tg_id = ?', (likes_json, self.tg_id))
+            conn.commit()
             conn.close()
         except sqlite3.Error as e:
             return False, f"Ошибка базы данных: {e}"
@@ -161,6 +190,7 @@ class User:
             conn = sqlite3.connect(self.db_table)
             cursor = conn.cursor()
             cursor.execute('UPDATE users SET likes = ? WHERE tg_id = ?', (likes_json, self.tg_id))
+            conn.commit()
             conn.close()
         except sqlite3.Error as e:
             return False, f"Ошибка базы данных: {e}"
@@ -168,6 +198,7 @@ class User:
     def like(self, user):
         if self.tg_id in user.likes:
             user.del_like(self)
+            self.del_like(user)
             return True
         else:
             self.add_like(user)
@@ -181,12 +212,13 @@ def get_user(tg_id):
     try:
         conn = sqlite3.connect(db_table)
         cursor = conn.cursor()
-        cursor.execute('SELECT tg_id, name, interests, description, photo FROM users WHERE tg_id = ?', (tg_id,))
+        cursor.execute('SELECT tg_id, name, interests, description, photo, likes, i FROM users WHERE tg_id = ?', (tg_id,))
         ans = cursor.fetchone()
         conn.close()
         if ans:
             interests = json.loads(ans[2])
-            return User(ans[0], ans[1], interests, ans[3], ans[4])
+            likes = json.loads(ans[5]) if ans[5] else ans[5]
+            return User(ans[0], ans[1], interests, ans[3], ans[4], likes, ans[-1])
         else:
             return None
     except sqlite3.Error as e:

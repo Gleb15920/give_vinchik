@@ -13,3 +13,6 @@ registred_user = ReplyKeyboardMarkup(keyboard=
 change = ReplyKeyboardMarkup(keyboard=
                              [[types.KeyboardButton(text='Отмена')]])
 
+lenta = ReplyKeyboardMarkup(keyboard=
+                            [[types.KeyboardButton(text='👍'), types.KeyboardButton(text='👎'),
+                              types.KeyboardButton(text='⛔️')]])

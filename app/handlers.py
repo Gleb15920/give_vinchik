@@ -17,7 +17,7 @@ logging1 = None
 
 
 def user_register(tg_id, username, interests, description, photo):
-    return user.User(tg_id, username, interests, description, photo)
+    return user.User(tg_id, username, interests, description, photo, [], -1)
 
 
 def setup_handlers(router, bot, logger):
@@ -339,4 +339,67 @@ def setup_handlers(router, bot, logger):
                 photo=FSInputFile(us.photo),
                 caption=f"{us.name}, {us.description}",
             )
+
     # тут будет бот присылать сообщение полной анкеты
+
+    @router.message(Changes.lenta)
+    async def lenta(message: Message, state: FSMContext):
+        us = user.get_user(message.from_user.id)
+        us.find_similar_users()
+        other_us, percent = us.similar()
+        other_us = user.get_user(other_us)
+        if message.text == '👍':
+            if us.like(other_us):
+                chat = await bot.get_chat(other_us.tg_id)
+                username = chat.username
+                await message.answer(
+                    text="У вас взаимность!",
+                    reply_markup=kb.registred_user,
+                    resize_keyboard=True)
+                await bot.send_photo(
+                    chat_id=message.chat.id,
+                    photo=FSInputFile(other_us.photo),
+                    caption=f"{other_us.name} (@{username}), {other_us.description}")
+        elif message.text == '👎':
+            pass
+        elif message.text == "⛔️":
+            await state.clear()
+            await message.answer(
+                text="Надеемся, вы нашли новых друзей!",
+                reply_markup=kb.registred_user,
+                resize_keyboard=True)
+            return
+        other_us, percent = us.pop_user()
+        if other_us:
+            await bot.send_photo(
+                chat_id=message.chat.id,
+                photo=FSInputFile(other_us.photo),
+                caption=f"Пользователь с {percent} сходства: \n{other_us.name}, {other_us.description}")
+        else:
+            await message.answer(
+                text="Пользователей с вашими интересами больше нет.",
+                reply_markup=kb.registred_user,
+                resize_keyboard=True)
+            await state.clear()
+            return
+
+    @router.message(Command('lenta'))
+    @router.message(F.text.contains('Смотреть анкеты'))
+    async def show_anket(message: Message, state: FSMContext):
+        us = user.get_user(message.from_user.id)
+        us.find_similar_users()
+        us.nul_i()
+        await state.set_state(Changes.lenta)
+        other_us, percent = us.pop_user()
+        other_us = user.get_user(other_us)
+        if other_us:
+            await bot.send_photo(
+                chat_id=message.chat.id,
+                photo=FSInputFile(other_us.photo),
+                caption=f"Пользователь с {percent} сходства: \n{other_us.name}, {other_us.description}",
+                reply_markup=kb.lenta)
+        else:
+            await message.answer(
+                text="Пользователей с вашими интересами больше нет.",
+                reply_markup=kb.registred_user,
+                resize_keyboard=True)

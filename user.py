@@ -12,6 +12,8 @@ class User:
         self.description = description
         self.db_table = db_table
         self.likes = []
+        self.similars = []
+        self.i = 0
         self.update()
 
     def db(self):
@@ -69,7 +71,6 @@ class User:
         try:
             self.description = description
 
-            print("qwqweqwe")
             conn = sqlite3.connect(self.db_table)
             cursor = conn.cursor()
             cursor.execute('UPDATE users SET description = ? WHERE tg_id = ?', (self.description, self.tg_id))
@@ -97,9 +98,13 @@ class User:
                     similarities.append((get_user(other_id), str(int(similarity * 100)) + "%"))
 
             similarities.sort(key=lambda x: x[1], reverse=True)
-            return similarities
+            self.similars = similarities
         except sqlite3.Error as e:
             return False, f"Ошибка базы данных: {e}"
+
+    def pop_user(self):
+        self.i += 1
+        return self.similars[self.i]
 
     def delete_user(self):
         try:
@@ -112,17 +117,17 @@ class User:
         except sqlite3.Error as e:
             return False, f"Ошибка базы данных: {e}"
 
-    # def check_db(self):
-    #     try:
-    #         conn = sqlite3.connect(self.db_table)
-    #         cursor = conn.cursor()
-    #         cursor.execute('SELECT id FROM users WHERE id = ?', (self.tg_id,))
-    #         if not cursor.fetchone():
-    #             conn.close()
-    #             return False, "Пользователь не найден."
-    #         return True
-    #     except sqlite3.Error as e:
-    #         return False, f"Ошибка базы данных: {e}"
+    def check_db(self):
+        try:
+            conn = sqlite3.connect(self.db_table)
+            cursor = conn.cursor()
+            cursor.execute('SELECT id FROM users WHERE id = ?', (self.tg_id,))
+            if not cursor.fetchone():
+                conn.close()
+                return False, "Пользователь не найден."
+            return True
+        except sqlite3.Error as e:
+            return False, f"Ошибка базы данных: {e}"
 
     def add_like(self, user):
         try:
@@ -156,8 +161,8 @@ class User:
             self.add_like(user)
             return False
 
-    # def get_likes(self):
-    #     return [get_user(i) for i in self.likes]
+    def get_likes(self):
+        return [get_user(i) for i in self.likes]
 
 
 def get_user(tg_id):

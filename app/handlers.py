@@ -32,6 +32,8 @@ def setup_handlers(router, bot, logger):
         description_user = State()
         photo_user = State()
         interests_user = State()
+        lenta = State()
+
 
     @router.message(F.text == 'Остановить создание анкеты')
     async def cancel_handler(message: types.Message, state: FSMContext):

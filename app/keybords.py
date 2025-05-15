@@ -12,3 +12,4 @@ registred_user = ReplyKeyboardMarkup(keyboard=
                                       [types.KeyboardButton(text='Посмотреть свою анкету')]])
 change = ReplyKeyboardMarkup(keyboard=
                              [[types.KeyboardButton(text='Отмена')]])
+

@@ -7,13 +7,17 @@ class User:
     def __init__(self, tg_id, name, interests, description, photo):
         self.tg_id = tg_id
         self.name = name
-        self.interests = interests
+        if type(interests) is str:
+            interests = interests.split(", ")
+            self.interests = interests
+        elif type(interests) is list:
+            self.interests = interests
         self.photo = photo
         self.description = description
         self.db_table = db_table
         self.likes = []
         self.similars = []
-        self.i = 0
+        self.i = -1
         self.update()
 
     def db(self):
@@ -44,7 +48,11 @@ class User:
 
     def change_interests(self, interests):
         try:
-            self.interests = interests
+            if type(interests) is str:
+                interests = interests.split(", ")
+                self.interests = interests
+            elif type(interests) is list:
+                self.interests = interests
             interests_json = json.dumps(self.interests)
 
             conn = sqlite3.connect(self.db_table)
@@ -95,7 +103,7 @@ class User:
                 if other_id not in self.likes:
                     other_interests = json.loads(interests_json)
                     similarity = jaccard_similarity(self.interests, other_interests)
-                    similarities.append((get_user(other_id), str(int(similarity * 100)) + "%"))
+                    similarities.append((other_id, str(int(similarity * 100)) + "%"))
 
             similarities.sort(key=lambda x: x[1], reverse=True)
             self.similars = similarities
@@ -103,8 +111,11 @@ class User:
             return False, f"Ошибка базы данных: {e}"
 
     def pop_user(self):
-        self.i += 1
-        return self.similars[self.i]
+        if self.i + 1 < len(self.similars):
+            self.i += 1
+            return get_user(self.similars[self.i])
+        else:
+            return False
 
     def delete_user(self):
         try:

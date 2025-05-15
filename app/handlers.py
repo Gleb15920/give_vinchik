@@ -333,9 +333,10 @@ def setup_handlers(router, bot, logger):
     async def show_anket(message: Message, state: FSMContext):
         us = user.get_user(message.from_user.id)
         await message.reply(text="Ваша анкета выглядит так:")
-        await bot.send_photo(
-            chat_id=message.chat.id,
-            photo=FSInputFile(us.photo),
-            caption=f"{us.name}, {us.description}",
-        )
+        if us:
+            await bot.send_photo(
+                chat_id=message.chat.id,
+                photo=FSInputFile(us.photo),
+                caption=f"{us.name}, {us.description}",
+            )
     # тут будет бот присылать сообщение полной анкеты

@@ -103,7 +103,7 @@ class User:
                 if other_id not in self.likes:
                     other_interests = json.loads(interests_json)
                     similarity = jaccard_similarity(self.interests, other_interests)
-                    similarities.append((other_id, str(int(similarity * 100)) + "%"))
+                    similarities.append((get_user(other_id), str(int(similarity * 100)) + "%"))
 
             similarities.sort(key=lambda x: x[1], reverse=True)
             self.similars = similarities
@@ -111,11 +111,12 @@ class User:
             return False, f"Ошибка базы данных: {e}"
 
     def pop_user(self):
+        print(self.i, len(self.similars))
         if self.i + 1 < len(self.similars):
             self.i += 1
-            return get_user(self.similars[self.i])
+            return self.similars[self.i]
         else:
-            return False
+            return None
 
     def delete_user(self):
         try:
@@ -187,7 +188,7 @@ def get_user(tg_id):
             interests = json.loads(ans[2])
             return User(ans[0], ans[1], interests, ans[3], ans[4])
         else:
-            return False
+            return None
     except sqlite3.Error as e:
         return False, f"Ошибка базы данных: {e}"
 

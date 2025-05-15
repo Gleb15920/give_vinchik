@@ -212,16 +212,15 @@ def setup_handlers(router, bot, logger):
             text="Введи новое описание.",
             reply_markup=kb.change,
             resize_keyboard=True)
-        user.get_user(message.from_user.id).change_description(message.text)
 
     @router.message(Changes.description_user)
     async def process_description(message: Message, state: FSMContext):
         if message.text == "Отмена":
-            await state.clear()
             await message.answer(
                 text="Отменено.",
                 reply_markup=kb.registred_user,
                 resize_keyboard=True)
+            await state.clear()
             return
         if message.content_type != ContentType.TEXT:
             await message.reply(
@@ -245,7 +244,6 @@ def setup_handlers(router, bot, logger):
             text='Введи новый список интересов через запятую. Таким образом: "хоккей, айти, спать,..."',
             reply_markup=kb.change,
             resize_keyboard=True)
-        user.get_user(message.from_user.id).change_interests(message.text.split(", "))
 
     @router.message(Changes.interests_user)
     async def process_interests(message: Message, state: FSMContext):
@@ -277,7 +275,6 @@ def setup_handlers(router, bot, logger):
             text="Отправьте новое фото.",
             reply_markup=kb.change,
             resize_keyboard=True)
-        user.get_user(message.from_user.id).change_interests(message.text.split(", "))
 
     @router.message(Changes.photo_user)
     async def process_photo(message: Message, state: FSMContext):

@@ -69,6 +69,7 @@ class User:
         try:
             self.description = description
 
+            print("qwqweqwe")
             conn = sqlite3.connect(self.db_table)
             cursor = conn.cursor()
             cursor.execute('UPDATE users SET description = ? WHERE tg_id = ?', (self.description, self.tg_id))

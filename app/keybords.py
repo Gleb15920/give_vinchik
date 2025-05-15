@@ -5,8 +5,10 @@ otdaivincikBot = ReplyKeyboardMarkup(keyboard=
                                      [[types.KeyboardButton(text='Остановить создание анкеты')]])
 registred_user = ReplyKeyboardMarkup(keyboard=
                                      [[types.KeyboardButton(text='Смотреть анкеты')],
-                                      [types.KeyboardButton(text='Изменить имя')],
-                                      [types.KeyboardButton(text='Изменить описание')],
-                                      [types.KeyboardButton(text='Изменить список интересов')],
-                                      [types.KeyboardButton(text='Поменять фогографию')],
+                                      [types.KeyboardButton(text='Изменить имя'),
+                                       types.KeyboardButton(text='Изменить описание')],
+                                      [types.KeyboardButton(text='Изменить список интересов'),
+                                       types.KeyboardButton(text='Поменять фотографию')],
                                       [types.KeyboardButton(text='Посмотреть свою анкету')]])
+change = ReplyKeyboardMarkup(keyboard=
+                             [[types.KeyboardButton(text='Отмена')]])

@@ -42,7 +42,7 @@ class User:
 
     def change_interests(self, interests):
         try:
-            self.interests = interests.split(", ")
+            self.interests = interests
             interests_json = json.dumps(self.interests)
 
             conn = sqlite3.connect(self.db_table)

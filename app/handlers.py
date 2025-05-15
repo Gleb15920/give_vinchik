@@ -178,84 +178,116 @@ def setup_handlers(router, bot, logger):
         await state.set_state(Changes.username)
         await message.answer(
             text="Введи новое имя.",
-            reply_markup=kb.registred_user,
+            reply_markup=kb.change,
             resize_keyboard=True)
 
     @router.message(Changes.username)
     async def process_name(message: Message, state: FSMContext):
-        await state.clear()
-        name = message.text.strip()
-        user.get_user(message.from_user.id).change_name(name)
-        if not name:
+        if message.text == "Отмена":
+            await state.clear()
+            await message.answer(
+                text="Отменено.",
+                reply_markup=kb.registred_user,
+                resize_keyboard=True)
+            return
+        if message.content_type != ContentType.TEXT:
             await message.reply(
-                text="Имя не может быть пустым. Попробуйте снова:",
+                text="Описание должно быть текстом. Попробуйте снова.",
                 reply_to_message_id=message.message_id
             )
+            return
+        name = message.text.strip()
+        user.get_user(message.from_user.id).change_name(name)
         await message.reply(
             text="Спасибо! Новое имя было сохранено!",
-            reply_to_message_id=message.message_id
+            reply_to_message_id=message.message_id,
+            reply_markup=kb.registred_user
         )
+        await state.clear()
 
     @router.message(F.text.contains('Изменить описание'))
     async def change_description(message: Message, state: FSMContext):
         await state.set_state(Changes.description_user)
         await message.answer(
             text="Введи новое описание.",
-            reply_markup=kb.registred_user,
+            reply_markup=kb.change,
             resize_keyboard=True)
         user.get_user(message.from_user.id).change_description(message.text)
 
     @router.message(Changes.description_user)
     async def process_description(message: Message, state: FSMContext):
-        await state.clear()
-        description = message.text.strip()
-        user.get_user(message.from_user.id).change_description(description)
-        if not description:
+        if message.text == "Отмена":
+            await state.clear()
+            await message.answer(
+                text="Отменено.",
+                reply_markup=kb.registred_user,
+                resize_keyboard=True)
+            return
+        if message.content_type != ContentType.TEXT:
             await message.reply(
-                text="Описание не может быть пустым. Попробуйте снова.",
+                text="Описание должно быть текстом. Попробуйте снова.",
                 reply_to_message_id=message.message_id
             )
+            return
+        description = message.text.strip()
+        user.get_user(message.from_user.id).change_description(description)
         await message.reply(
             text="Спасибо! Новое описание было сохранено!",
-            reply_to_message_id=message.message_id
+            reply_to_message_id=message.message_id,
+            reply_markup=kb.registred_user
         )
+        await state.clear()
 
     @router.message(F.text.contains('Изменить список интересов'))
     async def change_interests(message: Message, state: FSMContext):
         await state.set_state(Changes.interests_user)
         await message.answer(
-            text="Введи новый список интересов.",
-            reply_markup=kb.registred_user,
+            text='Введи новый список интересов через запятую. Таким образом: "хоккей, айти, спать,..."',
+            reply_markup=kb.change,
             resize_keyboard=True)
         user.get_user(message.from_user.id).change_interests(message.text.split(", "))
 
     @router.message(Changes.interests_user)
     async def process_interests(message: Message, state: FSMContext):
-        await state.clear()
-        interests = message.text.strip()
-        user.get_user(message.from_user.id).change_interests(interests)
-        if not interests:
+        if message.text == "Отмена":
+            await state.clear()
+            await message.answer(
+                text="Отменено.",
+                reply_markup=kb.registred_user,
+                resize_keyboard=True)
+        if message.content_type != ContentType.TEXT:
             await message.reply(
-                text="Список интересов не может быть пустым. Попробуйте снова.",
+                text="Список интересов должен быть текстом. Попробуйте снова.",
                 reply_to_message_id=message.message_id
             )
+            return
+        interests = message.text.strip().split(", ")
+        user.get_user(message.from_user.id).change_interests(interests)
         await message.reply(
             text="Спасибо! Новый список интересов был сохранен!",
-            reply_to_message_id=message.message_id
+            reply_to_message_id=message.message_id,
+            reply_markup=kb.registred_user
         )
+        await state.clear()
 
-    @router.message(F.text.contains('Поменять фогографию'))
+    @router.message(F.text.contains('Поменять фотографию'))
     async def change_photo(message: Message, state: FSMContext):
         await state.set_state(Changes.photo_user)
         await message.answer(
             text="Отправьте новое фото.",
-            reply_markup=kb.registred_user,
+            reply_markup=kb.change,
             resize_keyboard=True)
         user.get_user(message.from_user.id).change_interests(message.text.split(", "))
 
     @router.message(Changes.photo_user)
     async def process_photo(message: Message, state: FSMContext):
-        await state.clear()
+        if message.text == "Отмена":
+            await state.clear()
+            await message.answer(
+                text="Отменено.",
+                reply_markup=kb.registred_user,
+                resize_keyboard=True)
+            return
         try:
             photo = message.photo[-1]
             logger.info(f"Получена фотография с file_id: {photo.file_id}")
@@ -272,7 +304,8 @@ def setup_handlers(router, bot, logger):
             save_dir = os.path.dirname(save_path) or "."
             if not os.access(save_dir, os.W_OK):
                 logger.error(f"Нет прав на запись в директорию: {save_dir}")
-                await message.reply("Ошибка: Нет прав на запись в директорию.")
+                await message.reply("Ошибка: Нет прав на запись в директорию.",
+                                    reply_markup=kb.registred_user)
                 return
 
             with open(save_path, 'wb') as new_file:
@@ -283,7 +316,8 @@ def setup_handlers(router, bot, logger):
                 await state.update_data(photo=save_path)
             else:
                 logger.error("Файл не был сохранен")
-                await message.reply("Файл не был сохранен.")
+                await message.reply("Файл не был сохранен.",
+                                    reply_markup=kb.registred_user)
             user.get_user(message.from_user.id).change_photo(save_path)
         except Exception as e:
             logger.error(f"Ошибка при обработке фотографии: {str(e)}")
@@ -292,8 +326,10 @@ def setup_handlers(router, bot, logger):
             return
         await message.reply(
             text="Спасибо! Новое фото было сохранено!",
-            reply_to_message_id=message.message_id
+            reply_to_message_id=message.message_id,
+            reply_markup=kb.registred_user
         )
+        await state.clear()
 
     @router.message(F.text.contains('Посмотреть свою анкету'))
     async def show_anket(message: Message, state: FSMContext):

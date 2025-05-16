@@ -5,7 +5,7 @@ from time import time
 import give_vinchik.app.keybords as kb
 
 class ThrottlingMiddleware(BaseMiddleware):
-    def __init__(self, logger, limit=1, period=2):
+    def __init__(self, logger, limit=1, period=1):
         super().__init__()
         self.limit = limit  # Максимум сообщений
         self.period = period  # Период в секундах
@@ -38,7 +38,6 @@ class ThrottlingMiddleware(BaseMiddleware):
                                resize_keyboard=True
                                )
             await state.clear()
-
             return
 
         return await handler(event, data)

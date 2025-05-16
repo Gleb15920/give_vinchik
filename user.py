@@ -2,6 +2,7 @@ import json
 import sqlite3
 from config import db_table
 
+
 class User:
     def __init__(self, tg_id, name, interests, description, photo, likes, i):
         self.tg_id = tg_id
@@ -215,7 +216,8 @@ def get_user(tg_id):
     try:
         conn = sqlite3.connect(db_table)
         cursor = conn.cursor()
-        cursor.execute('SELECT tg_id, name, interests, description, photo, likes, i FROM users WHERE tg_id = ?', (tg_id,))
+        cursor.execute('SELECT tg_id, name, interests, description, photo, likes, i FROM users WHERE tg_id = ?',
+                       (tg_id,))
         ans = cursor.fetchone()
         conn.close()
         if ans:

@@ -141,7 +141,7 @@ def setup_handlers(router, bot, logger):
         except Exception as e:
             logger.error(f"Ошибка при обработке фотографии: {str(e)}")
         await message.answer('Осталось лишь указать свои интересы! Напиши их через запятую. Таким образом: "хоккей, '
-                             'готовка, рыбалка,..."')
+                             'готовка, рыбалка,..." (без кавычек)')
         await state.set_state(Questionnaire.interests_user)
 
     @router.message(Questionnaire.interests_user)
@@ -242,7 +242,7 @@ def setup_handlers(router, bot, logger):
     async def change_interests(message: Message, state: FSMContext):
         await state.set_state(Changes.interests_user)
         await message.answer(
-            text='Введи новый список интересов через запятую. Таким образом: "хоккей, айти, спать,..."',
+            text='Введи новый список интересов через запятую. Таким образом: "хоккей, айти, спать,..." (без кавычек)',
             reply_markup=kb.change,
             resize_keyboard=True)
 
@@ -254,6 +254,7 @@ def setup_handlers(router, bot, logger):
                 text="Отменено.",
                 reply_markup=kb.registred_user,
                 resize_keyboard=True)
+            return
         if message.content_type != ContentType.TEXT:
             await message.reply(
                 text="Список интересов должен быть текстом. Попробуйте снова.",
@@ -348,28 +349,48 @@ def setup_handlers(router, bot, logger):
         us.find_similar_users()
         other_us, percent = us.similar()
         other_us = user.get_user(other_us)
+        print(other_us)
         if message.text == '👍':
-            if us.like(other_us):
-                chat = await bot.get_chat(other_us.tg_id)
-                username = chat.username
+            if other_us:
+                if us.like(other_us):
+                    chat = await bot.get_chat(other_us.tg_id)
+                    username = chat.username
+                    await message.answer(
+                        text="У вас взаимность!",
+                        reply_markup=kb.registred_user,
+                        resize_keyboard=True)
+                    await bot.send_photo(
+                        chat_id=message.chat.id,
+                        photo=FSInputFile(other_us.photo),
+                        caption=f"{other_us.name} (@{username}), {other_us.description}")
+                    return
+                else:
+                    await message.answer(
+                        text="Следующий пользователь:",
+                        reply_markup=kb.lenta,
+                        resize_keyboard=True)
+            else:
                 await message.answer(
-                    text="У вас взаимность!",
+                    text="Пользователей с вашими интересами больше нет.",
                     reply_markup=kb.registred_user,
                     resize_keyboard=True)
-                await bot.send_photo(
-                    chat_id=message.chat.id,
-                    photo=FSInputFile(other_us.photo),
-                    caption=f"{other_us.name} (@{username}), {other_us.description}")
+                await state.clear()
+                return
         elif message.text == '👎':
+            await message.answer(
+                text="Следующий пользователь:",
+                reply_markup=kb.lenta,
+                resize_keyboard=True)
             pass
         elif message.text == "⛔️":
-            await state.clear()
             await message.answer(
                 text="Надеемся, вы нашли новых друзей!",
                 reply_markup=kb.registred_user,
                 resize_keyboard=True)
+            await state.clear()
             return
         other_us, percent = us.pop_user()
+        other_us = user.get_user(other_us)
         if other_us:
             await bot.send_photo(
                 chat_id=message.chat.id,
@@ -386,20 +407,33 @@ def setup_handlers(router, bot, logger):
     @router.message(Command('lenta'))
     @router.message(F.text.contains('Смотреть анкеты'))
     async def show_anket(message: Message, state: FSMContext):
+        await state.set_state(Changes.lenta)
         us = user.get_user(message.from_user.id)
         us.find_similar_users()
         us.nul_i()
-        await state.set_state(Changes.lenta)
         other_us, percent = us.pop_user()
         other_us = user.get_user(other_us)
         if other_us:
+            await message.answer(
+                text="Следующий пользователь:",
+                reply_markup=kb.lenta,
+                resize_keyboard=True)
             await bot.send_photo(
                 chat_id=message.chat.id,
                 photo=FSInputFile(other_us.photo),
-                caption=f"Пользователь с {percent} сходства: \n{other_us.name}, {other_us.description}",
-                reply_markup=kb.lenta)
+                caption=f"Пользователь с {percent} сходства: \n{other_us.name}, {other_us.description}")
         else:
             await message.answer(
                 text="Пользователей с вашими интересами больше нет.",
                 reply_markup=kb.registred_user,
                 resize_keyboard=True)
+            await state.clear()
+
+    @router.message(F.text.contains('⛔️'))
+    async def stop(message: Message, state: FSMContext):
+        await message.answer(
+            text="Надеемся, вы нашли новых друзей!",
+            reply_markup=kb.registred_user,
+            resize_keyboard=True)
+        await state.clear()
+

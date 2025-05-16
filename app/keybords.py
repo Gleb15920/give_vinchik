@@ -9,7 +9,9 @@ registred_user = ReplyKeyboardMarkup(keyboard=
                                        types.KeyboardButton(text='Изменить описание')],
                                       [types.KeyboardButton(text='Изменить список интересов'),
                                        types.KeyboardButton(text='Поменять фотографию')],
-                                      [types.KeyboardButton(text='Посмотреть свою анкету')]])
+                                      [types.KeyboardButton(text='Посмотреть свою анкету')],
+                                      [types.KeyboardButton(text='/start')]
+                                      ])
 change = ReplyKeyboardMarkup(keyboard=
                              [[types.KeyboardButton(text='Отмена')]])
 

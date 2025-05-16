@@ -13,6 +13,7 @@ from aiogram.filters import CommandStart, StateFilter, Command
 from aiogram import Router
 import give_vinchik.app.keybords as kb
 import give_vinchik.user as user
+import spam
 
 import logging
 
@@ -45,6 +46,7 @@ def make_db():
 
 async def main():
     make_db()
+    router.message.middleware(spam.ThrottlingMiddleware(logger))
     setup_handlers(router, bot, logging)
     dp.include_router(router)
     await dp.start_polling(bot)

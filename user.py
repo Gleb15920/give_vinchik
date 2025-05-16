@@ -2,20 +2,23 @@ import json
 import sqlite3
 from config import db_table
 
-
 class User:
     def __init__(self, tg_id, name, interests, description, photo, likes, i):
         self.tg_id = tg_id
         self.name = name
         if type(interests) is str:
-            interests = interests.split(", ")
-            self.interests = interests
+            interests = interests.split(",")
+            final_inter = []
+            for i in interests:
+                i.strip()
+                final_inter.append(i)
+            self.interests = final_inter
         elif type(interests) is list:
             self.interests = interests
         self.photo = photo
         self.description = description
         self.db_table = db_table
-        self.likes = []
+        self.likes = likes
         self.similars = []
         self.i = i
         self.update()
@@ -111,7 +114,7 @@ class User:
             return False, f"Ошибка базы данных: {e}"
 
     def update(self):
-        print(self.db())
+        self.db()
 
     def find_similar_users(self):
         try:
@@ -134,8 +137,8 @@ class User:
             return False, f"Ошибка базы данных: {e}"
 
     def pop_user(self):
-        if self.i + 1 < len(self.similars):
-            self.add_i()
+        self.add_i()
+        if self.i < len(self.similars):
             return self.similars[self.i]
         else:
             return None, None
@@ -196,12 +199,12 @@ class User:
             return False, f"Ошибка базы данных: {e}"
 
     def like(self, user):
+        self.add_like(user)
         if self.tg_id in user.likes:
             user.del_like(self)
             self.del_like(user)
             return True
         else:
-            self.add_like(user)
             return False
 
     def get_likes(self):
@@ -217,7 +220,7 @@ def get_user(tg_id):
         conn.close()
         if ans:
             interests = json.loads(ans[2])
-            likes = json.loads(ans[5]) if ans[5] else ans[5]
+            likes = json.loads(ans[5]) if ans[5] else []
             return User(ans[0], ans[1], interests, ans[3], ans[4], likes, ans[-1])
         else:
             return None
